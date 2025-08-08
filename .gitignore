@@ -210,3 +210,4 @@ __marimo__/
 # langgraph config
 .env
 .langgraph_api
+*.ipynb
