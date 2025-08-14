@@ -3,7 +3,7 @@ import './App.css'
 
 // define Message type
 interface Message {
-  id: number
+  id: string
   text: string
   sender: 'user' | 'assistant'
 }
@@ -15,6 +15,9 @@ function App() {
   const [inputValue, setInputValue] = useState('')
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
+
+  const makeId = () =>
+    (globalThis.crypto?.randomUUID?.() ?? `${Date.now()}-${Math.random().toString(36).slice(2)}`)
 
   // when messages change, scroll to the bottom
   useEffect(() => {
@@ -36,12 +39,13 @@ function App() {
     if (!rawInput.trim()) return
 
     // create user message
-    const userMessage: Message = { id: Date.now(), text: rawInput, sender: 'user' }
+    const userId = makeId()
+    const userMessage: Message = { id: userId, text: rawInput, sender: 'user' }
     setMessages(prev => [...prev, userMessage])
     setInputValue('') // clear input
 
     // insert a blank assistant message
-    const assistantId = Date.now() + 1
+    const assistantId = makeId()
     setMessages(prev => [...prev, { id: assistantId, text: '', sender: 'assistant' }])
 
     try {
@@ -127,7 +131,7 @@ function App() {
           <div key={msg.id} className={`message ${msg.sender}-message`}>
             {msg.sender === 'assistant'
               ? <div className='assistant-text'>{msg.text}</div>
-              : <p>{msg.text}</p>
+              : <div className='user-text'>{msg.text}</div>
             }
           </div>
         ))}
@@ -143,7 +147,7 @@ function App() {
           rows={1}
           // style={{ resize: 'none' }}
         />
-        <button type='submit'>Send</button>
+        <button type='submit'>↑</button>
       </form>
     </div>
   )

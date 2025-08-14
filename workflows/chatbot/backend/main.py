@@ -5,6 +5,8 @@ from pydantic import BaseModel
 import asyncio
 import json
 
+from chatbot.my_agent.agent import root_graph
+
 app = FastAPI(title="Chatbot", version="0.0.0")
 app.add_middleware(
     CORSMiddleware,
@@ -24,21 +26,28 @@ class AgentResponse(BaseModel):
 def health():
     return {"status": "ok"}
 
+
 @app.post("/chat", response_model=AgentResponse)
 async def chat(user_message: UserMessage):
     return AgentResponse(response=f"echo: {user_message.message}")
 
-async def mock_agent_streaming_response(message: str):
-    """mock agent response, simulating output token streaming"""
-    response = f"echo: {message}"
-    for r in response:
-        await asyncio.sleep(0.05)  # simulate delay
-        yield r
+
+def agent_streaming_response(message: str):
+    """streaming response from the agent"""
+    events = root_graph.stream(
+        input={'messages': [{'role': 'user', 'content': message}]},
+        config={'configurable': {'thread_id': '1'}},
+        stream_mode='messages'
+    )
+    for event in events:
+        msg, _ = event
+        token = msg.content
+        yield token
 
 @app.post("/chat/stream")
 async def chat_stream(user_message: UserMessage):
     async def event_generator():
-        async for token in mock_agent_streaming_response(user_message.message):
+        for token in agent_streaming_response(user_message.message):
             # SSE event
             yield f'data: {json.dumps({"token": token})}\n\n'
         yield 'data: {"end": true}\n\n'
