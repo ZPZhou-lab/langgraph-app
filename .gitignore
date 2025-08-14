@@ -211,3 +211,7 @@ __marimo__/
 .env
 .langgraph_api
 *.ipynb
+*.code-workspace
+web-agent-demo
+# React Component Preview
+previewConfig.json
